@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import './App.css';
 
 const workflowSteps = [
@@ -70,30 +71,87 @@ function printPage() {
 }
 
 function App() {
+  const [checkedItems, setCheckedItems] = useState({});
+  const [notes, setNotes] = useState('');
+  const [currentTime, setCurrentTime] = useState('');
+
+  useEffect(() => {
+    const updateTime = () => {
+      const now = new Date();
+      const startTime = new Date();
+      startTime.setHours(7, 0, 0, 0);
+      
+      if (now < startTime) {
+        setCurrentTime('Not started yet');
+        return;
+      }
+
+      const diff = now - startTime;
+      const hours = Math.floor(diff / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      setCurrentTime(`${hours}h ${minutes}m`);
+    };
+
+    updateTime();
+    const interval = setInterval(updateTime, 60000); // Update every minute
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleCheckboxChange = (stepIndex, instructionIndex) => {
+    const key = `${stepIndex}-${instructionIndex}`;
+    setCheckedItems(prev => ({
+      ...prev,
+      [key]: !prev[key]
+    }));
+  };
+
   return (
     <div className="app-container">
       <header className="header">
         <h1>Timber Business Workflow Tracker</h1>
         <p className="subtitle">Stay focused and move your timber trading platform forward, every day.</p>
-        <button className="print-btn" onClick={printPage}>🖨️ Print Daily Template</button>
+        <div className="header-controls">
+          <div className="timer">Time since 7 AM: {currentTime}</div>
+          <button className="print-btn" onClick={printPage}>🖨️ Print Daily Template</button>
+        </div>
       </header>
       <main className="workflow-grid">
-        {workflowSteps.map((step, idx) => (
-          <section className="workflow-card" key={idx}>
+        {workflowSteps.map((step, stepIndex) => (
+          <section className="workflow-card" key={stepIndex}>
             <div className="card-header">
               <span className="icon" aria-label="icon">{step.icon}</span>
               <h2>{step.title}</h2>
               <span className="time">{step.time}</span>
             </div>
             <ul>
-              {step.instructions.map((item, i) => (
-                <li key={i}>{item}</li>
+              {step.instructions.map((item, instructionIndex) => (
+                <li key={instructionIndex}>
+                  <label className="checkbox-label">
+                    <input
+                      type="checkbox"
+                      checked={checkedItems[`${stepIndex}-${instructionIndex}`] || false}
+                      onChange={() => handleCheckboxChange(stepIndex, instructionIndex)}
+                    />
+                    <span className={checkedItems[`${stepIndex}-${instructionIndex}`] ? 'checked' : ''}>
+                      {item}
+                    </span>
+                  </label>
+                </li>
               ))}
             </ul>
             <div className="why">{step.why}</div>
           </section>
         ))}
       </main>
+      <section className="notes-section">
+        <h2>My Notes & Thoughts</h2>
+        <textarea
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          placeholder="Write your thoughts, ideas, and notes here..."
+          rows="6"
+        />
+      </section>
       <footer className="footer">
         <p>© 2024 Timber Business Workflow Tracker. MIT License.</p>
       </footer>
