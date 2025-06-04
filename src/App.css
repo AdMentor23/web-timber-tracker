@@ -195,6 +195,47 @@ body {
   font-size: 0.9rem;
 }
 
+.week-calendar {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+  padding: 0 1rem;
+}
+
+.day-button {
+  flex: 1;
+  padding: 1rem;
+  border: 2px solid var(--accent-color);
+  border-radius: var(--border-radius);
+  background: var(--card-background);
+  color: var(--text-color);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: center;
+}
+
+.day-button:hover {
+  background-color: rgba(52, 152, 219, 0.1);
+}
+
+.day-button.today {
+  background-color: var(--accent-color);
+  color: white;
+}
+
+.day-button.selected {
+  background-color: rgba(52, 152, 219, 0.2);
+  border-color: var(--accent-color);
+  font-weight: bold;
+}
+
+.day-button.today.selected {
+  background-color: var(--accent-color);
+  color: white;
+}
+
 /* Mobile Responsiveness */
 @media (max-width: 768px) {
   .app-container {
@@ -228,6 +269,16 @@ body {
 
   .print-btn {
     width: 100%;
+  }
+
+  .week-calendar {
+    flex-direction: column;
+    padding: 0;
+  }
+
+  .day-button {
+    width: 100%;
+    padding: 0.75rem;
   }
 }
 

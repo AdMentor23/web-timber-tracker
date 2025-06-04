@@ -71,8 +71,15 @@ function printPage() {
 }
 
 function App() {
-  const [checkedItems, setCheckedItems] = useState({});
-  const [notes, setNotes] = useState('');
+  const [selectedDay, setSelectedDay] = useState(new Date());
+  const [checkedItems, setCheckedItems] = useState(() => {
+    const saved = localStorage.getItem('checkedItems');
+    return saved ? JSON.parse(saved) : {};
+  });
+  const [notes, setNotes] = useState(() => {
+    const saved = localStorage.getItem('notes');
+    return saved ? JSON.parse(saved) : {};
+  });
   const [currentTime, setCurrentTime] = useState('');
 
   useEffect(() => {
@@ -93,16 +100,58 @@ function App() {
     };
 
     updateTime();
-    const interval = setInterval(updateTime, 60000); // Update every minute
+    const interval = setInterval(updateTime, 60000);
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    localStorage.setItem('checkedItems', JSON.stringify(checkedItems));
+  }, [checkedItems]);
+
+  useEffect(() => {
+    localStorage.setItem('notes', JSON.stringify(notes));
+  }, [notes]);
+
   const handleCheckboxChange = (stepIndex, instructionIndex) => {
-    const key = `${stepIndex}-${instructionIndex}`;
+    const dayKey = selectedDay.toISOString().split('T')[0];
+    const key = `${dayKey}-${stepIndex}-${instructionIndex}`;
     setCheckedItems(prev => ({
       ...prev,
       [key]: !prev[key]
     }));
+  };
+
+  const handleNotesChange = (e) => {
+    const dayKey = selectedDay.toISOString().split('T')[0];
+    setNotes(prev => ({
+      ...prev,
+      [dayKey]: e.target.value
+    }));
+  };
+
+  const getWeekDays = () => {
+    const today = new Date();
+    const days = [];
+    for (let i = 0; i < 5; i++) {
+      const date = new Date(today);
+      date.setDate(today.getDate() - today.getDay() + i + 1);
+      days.push(date);
+    }
+    return days;
+  };
+
+  const formatDate = (date) => {
+    return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  };
+
+  const isToday = (date) => {
+    const today = new Date();
+    return date.toDateString() === today.toDateString();
+  };
+
+  const getDayNotes = () => {
+    const dayKey = selectedDay.toISOString().split('T')[0];
+    return notes[dayKey] || '';
   };
 
   return (
@@ -115,6 +164,19 @@ function App() {
           <button className="print-btn" onClick={printPage}>🖨️ Print Daily Template</button>
         </div>
       </header>
+
+      <div className="week-calendar">
+        {getWeekDays().map((date) => (
+          <button
+            key={date.toISOString()}
+            className={`day-button ${isToday(date) ? 'today' : ''} ${selectedDay.toDateString() === date.toDateString() ? 'selected' : ''}`}
+            onClick={() => setSelectedDay(date)}
+          >
+            {formatDate(date)}
+          </button>
+        ))}
+      </div>
+
       <main className="workflow-grid">
         {workflowSteps.map((step, stepIndex) => (
           <section className="workflow-card" key={stepIndex}>
@@ -124,34 +186,40 @@ function App() {
               <span className="time">{step.time}</span>
             </div>
             <ul>
-              {step.instructions.map((item, instructionIndex) => (
-                <li key={instructionIndex}>
-                  <label className="checkbox-label">
-                    <input
-                      type="checkbox"
-                      checked={checkedItems[`${stepIndex}-${instructionIndex}`] || false}
-                      onChange={() => handleCheckboxChange(stepIndex, instructionIndex)}
-                    />
-                    <span className={checkedItems[`${stepIndex}-${instructionIndex}`] ? 'checked' : ''}>
-                      {item}
-                    </span>
-                  </label>
-                </li>
-              ))}
+              {step.instructions.map((item, instructionIndex) => {
+                const dayKey = selectedDay.toISOString().split('T')[0];
+                const key = `${dayKey}-${stepIndex}-${instructionIndex}`;
+                return (
+                  <li key={instructionIndex}>
+                    <label className="checkbox-label">
+                      <input
+                        type="checkbox"
+                        checked={checkedItems[key] || false}
+                        onChange={() => handleCheckboxChange(stepIndex, instructionIndex)}
+                      />
+                      <span className={checkedItems[key] ? 'checked' : ''}>
+                        {item}
+                      </span>
+                    </label>
+                  </li>
+                );
+              })}
             </ul>
             <div className="why">{step.why}</div>
           </section>
         ))}
       </main>
+
       <section className="notes-section">
-        <h2>My Notes & Thoughts</h2>
+        <h2>Notes for {formatDate(selectedDay)}</h2>
         <textarea
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          placeholder="Write your thoughts, ideas, and notes here..."
+          value={getDayNotes()}
+          onChange={handleNotesChange}
+          placeholder="Write your thoughts, ideas, and notes for today..."
           rows="6"
         />
       </section>
+
       <footer className="footer">
         <p>© 2024 Timber Business Workflow Tracker. MIT License.</p>
       </footer>
