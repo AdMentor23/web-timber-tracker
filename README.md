@@ -28,17 +28,5 @@ npm run build
 ### 4. Deploy to GitHub Pages
 - Set the `homepage` field in `package.json` to your repo URL, e.g.:
   ```json
-  "homepage": "https://yourusername.github.io/web-timber-tracker"
+  "homepage": "https://AdMentor23.github.io/web-timber-tracker"
   ```
-- Add the following scripts to `package.json`:
-  ```json
-  "predeploy": "npm run build",
-  "deploy": "gh-pages -d dist"
-  ```
-- Deploy:
-  ```bash
-  npm run deploy
-  ```
-
-## License
-MIT
